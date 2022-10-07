@@ -1,12 +1,14 @@
 import os
 import csv
-
+import pprint
 import requests
+import json
 
 from clean_data import extract_data
 
 
 def request_raw_data():
+
     """Requests the groundwater levels
     for summer of 2022 (Jun 6th to Sept 22)
     for Texas
@@ -14,15 +16,23 @@ def request_raw_data():
     Allows gzip compression in transit.
     Returns a dictionary representing the JSON response.
     """
+    url = 'https://waterservices.usgs.gov/nwis/gwlevels'
+    params = {'format' : 'json',
+                'stateCd':'tx',
+                'startDT':'2022-06-21',
+                'endDT' :'2022-09-22',
+                'siteStatus':'all'}
 
-    return
+    resp = requests.get(url, params = params)
+    # pprint.pprint(resp.json())
+    data = resp.json()
+    return data
 
 
 def sort_data(data):
     """Sort the data lexicographically by "variable_name", "site_name" and then "datetime"."""
-
-    return
-
+    sorted_data = sorted(data, key = lambda x: (x["variable_name"], x["site_name"],x["datetime"]) )
+    return sorted_data
 
 def write_data_to_csv(data, path):
     """Write the data to the csv.
@@ -34,6 +44,15 @@ def write_data_to_csv(data, path):
         "longitude",
         "latitude"
     """
+    with open(path, 'w', encoding='utf8', newline='') as output_file:
+        fc = csv.DictWriter(output_file, fieldnames=["variable_name",
+        "site_name",
+        "datetime",
+        "value",
+        "longitude",
+        "latitude"])
+        fc.writeheader()
+        fc.writerows(data)
 
     return
 
